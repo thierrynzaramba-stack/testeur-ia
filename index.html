@@ -8,9 +8,10 @@
 <style>
   :root {
     --bg: #0f1115; --panel: #171a21; --line: #262b36; --text: #e7e9ee; --muted: #8b93a7;
-    --accent: #7c9cff; --user: #24304d; --err: #ff7a7a;
+    --accent: #7c9cff; --user: #24304d; --err: #ff7a7a; --star: #f5c451; --hover: #1e222b;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body {
     background: var(--bg); color: var(--text);
@@ -22,27 +23,26 @@
     padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel);
   }
   header h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; letter-spacing: .2px; }
-  select, input, textarea, button {
+  input, textarea, button {
     font: inherit; color: var(--text); background: var(--bg);
     border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
   }
-  select { max-width: 100%; flex: 1 1 260px; }
-  #customModel { flex: 1 1 220px; display: none; }
   button { cursor: pointer; background: var(--panel); }
   button:hover { border-color: var(--accent); }
   button.primary { background: var(--accent); color: #0b0d12; border-color: var(--accent); font-weight: 600; }
-  button:disabled { opacity: .5; cursor: default; }
-  details { width: 100%; }
+  #modelBtn {
+    flex: 1 1 260px; min-width: 0; text-align: left; background: var(--bg);
+    display: flex; align-items: center; gap: 8px;
+  }
+  #modelName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  details.sys { width: 100%; }
   summary { cursor: pointer; color: var(--muted); font-size: 13px; }
   #system { width: 100%; min-height: 60px; margin-top: 6px; resize: vertical; }
   main { flex: 1; overflow-y: auto; padding: 18px 14px 8px; }
   .wrap { max-width: 860px; margin: 0 auto; }
   .empty { color: var(--muted); text-align: center; margin-top: 18vh; }
   .msg { margin: 0 0 14px; display: flex; flex-direction: column; }
-  .bubble {
-    white-space: pre-wrap; word-wrap: break-word; padding: 10px 13px; border-radius: 12px;
-    max-width: 100%;
-  }
+  .bubble { white-space: pre-wrap; word-wrap: break-word; padding: 10px 13px; border-radius: 12px; max-width: 100%; }
   .user { align-items: flex-end; }
   .user .bubble { background: var(--user); max-width: 85%; }
   .assistant .bubble { background: var(--panel); border: 1px solid var(--line); }
@@ -53,10 +53,51 @@
   footer { border-top: 1px solid var(--line); background: var(--panel); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
   form { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
   #input { flex: 1; resize: none; min-height: 44px; max-height: 40vh; }
-  #pwdBox {
-    position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none;
-    align-items: center; justify-content: center; padding: 20px;
+
+  /* Sélecteur de modèle */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 10;
+    display: flex; align-items: flex-start; justify-content: center; padding: 5vh 12px;
   }
+  .sheet {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    width: 100%; max-width: 660px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sheet-head, .sheet-foot { display: flex; gap: 8px; padding: 10px; }
+  .sheet-head { border-bottom: 1px solid var(--line); }
+  .sheet-foot { border-top: 1px solid var(--line); }
+  .sheet-head input, .sheet-foot input { flex: 1; min-width: 0; }
+  .list { overflow-y: auto; flex: 1; padding: 4px 0 8px; }
+  .sec {
+    display: flex; justify-content: space-between; align-items: center; width: 100%;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted);
+    padding: 12px 14px 4px; background: none; border: 0; border-radius: 0; cursor: default;
+  }
+  button.sec { cursor: pointer; }
+  .row { display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; }
+  .row:hover { background: var(--hover); }
+  .row.active { background: #1f2740; }
+  .pick {
+    flex: 1; min-width: 0; text-align: left; background: none; border: 0; border-radius: 6px;
+    padding: 7px 8px; display: flex; flex-direction: column;
+  }
+  .pick .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick .sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tag { font-size: 11px; border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; margin-left: 6px; color: var(--muted); }
+  .tag.free { color: #7ddc9a; border-color: #2f5a3d; }
+  .ico {
+    flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center;
+    background: none; border: 1px solid transparent; color: var(--muted); font-size: 17px;
+  }
+  .ico:hover { border-color: var(--line); color: var(--text); }
+  .ico.on { color: var(--star); }
+  .none { color: var(--muted); padding: 14px; text-align: center; }
+  @media (max-width: 600px) {
+    .overlay { padding: 0; }
+    .sheet { max-width: none; max-height: none; height: 100%; border-radius: 0; border: 0; }
+  }
+
+  #pwdBox { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20; }
   #pwdBox > div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; width: 100%; max-width: 340px; }
   #pwdBox input { width: 100%; margin: 10px 0; }
 </style>
@@ -64,10 +105,11 @@
 <body>
 <header>
   <h1>Testeur IA</h1>
-  <select id="model" aria-label="Modèle"><option>Chargement des modèles…</option></select>
-  <input id="customModel" placeholder="ID OpenRouter, ex. mistralai/mistral-large" aria-label="ID du modèle">
+  <button id="modelBtn" type="button" aria-haspopup="dialog">
+    <span id="modelName">Chargement des modèles…</span><span aria-hidden="true">▾</span>
+  </button>
   <button id="newChat" type="button" title="Effacer la conversation">Nouvelle conversation</button>
-  <details>
+  <details class="sys">
     <summary>Consigne système (facultatif)</summary>
     <textarea id="system" placeholder="Ex. : Tu es un assistant direct, réponds en français."></textarea>
   </details>
@@ -84,6 +126,20 @@
   </form>
 </footer>
 
+<div id="picker" class="overlay" hidden>
+  <div class="sheet" role="dialog" aria-label="Choisir un modèle">
+    <div class="sheet-head">
+      <input id="search" type="search" placeholder="Rechercher un modèle…" autocomplete="off">
+      <button id="closePicker" type="button">Fermer</button>
+    </div>
+    <div id="list" class="list"></div>
+    <div class="sheet-foot">
+      <input id="customModel" placeholder="Ou saisir un ID OpenRouter" autocomplete="off">
+      <button id="useCustom" type="button">Utiliser</button>
+    </div>
+  </div>
+</div>
+
 <div id="pwdBox">
   <div>
     <strong>Mot de passe</strong>
@@ -97,59 +153,168 @@
 let history = [];
 let controller = null;
 const $ = (id) => document.getElementById(id);
-const CUSTOM = '__custom__';
 
 function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} }
 function load(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function loadSet(k) { try { const a = JSON.parse(load(k) || '[]'); return new Set(Array.isArray(a) ? a : []); } catch { return new Set(); } }
+function saveSet(k, s) { store(k, JSON.stringify([...s])); }
 
-// ---------- Modèles ----------
+// ---------- Modèles : favoris et archives gardés dans le navigateur ----------
+let MODELS = [];
+const byId = new Map();
+const favs = loadSet('testeur-ia-favs');
+const archived = loadSet('testeur-ia-archives');
+let current = load('testeur-ia-model') || '';
+let showArchived = false;
+
+const ICON_ARCHIVE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg>';
+const ICON_RESTORE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>';
+
+const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const price = (n) => String(n).replace('.', ',');
+
 async function loadModels() {
-  const sel = $('model');
-  let groups = [], error = '';
+  let error = '';
   try {
     const r = await fetch('/api/models');
     const j = await r.json();
-    groups = j.groups || [];
+    MODELS = j.models || [];
     error = j.error || '';
-  } catch (e) { error = 'Liste des modèles indisponible'; }
+  } catch { error = 'Liste des modèles indisponible'; }
+  for (const m of MODELS) byId.set(m.id, m);
+  if (!current) current = (MODELS.find((m) => m.peuBride) || MODELS[0] || {}).id || '';
+  updateModelButton();
+  if (error) showError(error + ' — tu peux saisir un ID à la main dans le sélecteur.');
+}
 
-  sel.innerHTML = '';
-  for (const g of groups) {
-    const og = document.createElement('optgroup');
-    og.label = g.family;
-    for (const m of g.models) {
-      const o = document.createElement('option');
-      o.value = m.id;
-      o.textContent = m.name + (m.free ? ' — gratuit' : '');
-      og.appendChild(o);
-    }
-    sel.appendChild(og);
+function modelLabel(id) { return byId.get(id)?.name || id; }
+function updateModelButton() {
+  $('modelName').textContent = current ? modelLabel(current) : 'Choisir un modèle';
+  $('modelBtn').title = current;
+}
+function choose(id) {
+  current = id;
+  store('testeur-ia-model', id);
+  updateModelButton();
+  closePicker();
+}
+
+function openPicker() {
+  $('picker').hidden = false;
+  $('search').value = '';
+  renderList();
+  $('search').focus();
+  $('list').querySelector('.row.active')?.scrollIntoView({ block: 'center' });
+}
+function closePicker() { $('picker').hidden = true; }
+
+function rowEl(m, isArchived, inPeuBride = false) {
+  const row = document.createElement('div');
+  row.className = 'row' + (m.id === current ? ' active' : '');
+  row.dataset.id = m.id;
+
+  const pick = document.createElement('button');
+  pick.type = 'button'; pick.className = 'pick'; pick.dataset.act = 'pick';
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = m.name;
+  if (m.free) { const t = document.createElement('span'); t.className = 'tag free'; t.textContent = 'gratuit'; nm.appendChild(t); }
+  if (m.peuBride && !inPeuBride) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'peu bridé'; nm.appendChild(t); }
+  const sub = document.createElement('span'); sub.className = 'sub';
+  sub.textContent = m.free || m.pin == null || m.pout == null ? m.id : `${m.id} · ${price(m.pin)} $ / ${price(m.pout)} $ par M`;
+  pick.append(nm, sub);
+
+  const fav = document.createElement('button');
+  fav.type = 'button'; fav.dataset.act = 'fav';
+  fav.className = 'ico' + (favs.has(m.id) ? ' on' : '');
+  fav.textContent = favs.has(m.id) ? '★' : '☆';
+  fav.title = favs.has(m.id) ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  fav.setAttribute('aria-label', fav.title);
+
+  const arch = document.createElement('button');
+  arch.type = 'button'; arch.className = 'ico'; arch.dataset.act = 'arch';
+  arch.innerHTML = isArchived ? ICON_RESTORE : ICON_ARCHIVE;
+  arch.title = isArchived ? 'Restaurer' : 'Archiver';
+  arch.setAttribute('aria-label', arch.title);
+
+  row.append(pick, fav, arch);
+  return row;
+}
+
+function section(frag, title, items, inPeuBride = false) {
+  if (!items.length) return;
+  const h = document.createElement('div');
+  h.className = 'sec';
+  h.textContent = `${title} (${items.length})`;
+  frag.appendChild(h);
+  for (const m of items) frag.appendChild(rowEl(m, false, inPeuBride));
+}
+
+function renderList() {
+  const q = norm($('search').value.trim());
+  const match = (m) => !q || norm(m.name).includes(q) || norm(m.id).includes(q);
+  const list = MODELS.filter(match);
+  // un modèle saisi à la main et mis en favori reste visible même s'il n'est pas dans la liste
+  for (const id of favs) if (!byId.has(id) && (!q || norm(id).includes(q))) list.push({ id, name: id });
+
+  const A = [], F = [], P = [], T = [];
+  for (const m of list) {
+    if (archived.has(m.id)) A.push(m);
+    else if (favs.has(m.id)) F.push(m);
+    else if (m.peuBride) P.push(m);
+    else T.push(m);
   }
-  const c = document.createElement('option');
-  c.value = CUSTOM; c.textContent = 'Autre modèle (saisir l\'ID)…';
-  sel.appendChild(c);
-
-  const last = load('testeur-ia-model');
-  if (last && [...sel.options].some((o) => o.value === last)) sel.value = last;
-  else if (last && last !== CUSTOM) { sel.value = CUSTOM; $('customModel').value = last; }
-  else if (!groups.length) sel.value = CUSTOM;
-  onModelChange();
-  if (error) showError(error + ' — tu peux saisir un ID à la main.');
+  const frag = document.createDocumentFragment();
+  section(frag, '★ Favoris', F);
+  section(frag, 'Réputés peu bridés', P, true);
+  section(frag, 'Tous les modèles', T);
+  if (A.length) {
+    const open = showArchived || !!q;
+    const h = document.createElement('button');
+    h.type = 'button'; h.className = 'sec'; h.dataset.act = 'toggleArch';
+    h.textContent = `${open ? '▾' : '▸'} Archivés (${A.length})`;
+    frag.appendChild(h);
+    if (open) for (const m of A) frag.appendChild(rowEl(m, true));
+  }
+  if (!frag.childNodes.length) {
+    const p = document.createElement('p');
+    p.className = 'none';
+    p.textContent = MODELS.length ? 'Aucun modèle ne correspond.' : 'Liste indisponible : saisis un ID ci-dessous.';
+    frag.appendChild(p);
+  }
+  const box = $('list');
+  const top = box.scrollTop;
+  box.replaceChildren(frag);
+  box.scrollTop = top;
 }
 
-function onModelChange() {
-  const custom = $('model').value === CUSTOM;
-  $('customModel').style.display = custom ? 'block' : 'none';
-  const id = currentModel();
-  if (id) store('testeur-ia-model', id);
-}
-function currentModel() {
-  return $('model').value === CUSTOM ? $('customModel').value.trim() : $('model').value;
-}
-function modelLabel(id) {
-  const o = [...$('model').options].find((x) => x.value === id);
-  return o ? o.textContent.replace(' — gratuit', '') : id;
-}
+$('list').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  if (act === 'toggleArch') { showArchived = !showArchived; renderList(); return; }
+  const id = btn.closest('.row')?.dataset.id;
+  if (!id) return;
+  if (act === 'pick') return choose(id);
+  if (act === 'fav') {
+    if (favs.has(id)) favs.delete(id);
+    else { favs.add(id); archived.delete(id); }
+  } else if (act === 'arch') {
+    if (archived.has(id)) archived.delete(id);
+    else { archived.add(id); favs.delete(id); }
+  }
+  saveSet('testeur-ia-favs', favs);
+  saveSet('testeur-ia-archives', archived);
+  renderList();
+});
+$('search').addEventListener('input', renderList);
+$('search').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); const first = $('list').querySelector('.row'); if (first) choose(first.dataset.id); }
+});
+$('modelBtn').addEventListener('click', openPicker);
+$('closePicker').addEventListener('click', closePicker);
+$('picker').addEventListener('click', (e) => { if (e.target === $('picker')) closePicker(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('picker').hidden) closePicker(); });
+$('useCustom').addEventListener('click', () => { const id = $('customModel').value.trim(); if (id) { $('customModel').value = ''; choose(id); } });
+$('customModel').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('useCustom').click(); } });
 
 // ---------- Affichage ----------
 function addMessage(role, text, cls = '') {
@@ -200,7 +365,7 @@ function askPassword() {
 
 // ---------- Envoi ----------
 async function send(question) {
-  const model = currentModel();
+  const model = current;
   if (!model) { showError('Choisis ou saisis un modèle.'); return; }
 
   history.push({ role: 'user', content: question });
@@ -310,8 +475,6 @@ $('input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('form').requestSubmit(); }
 });
 $('input').addEventListener('input', autoGrow);
-$('model').addEventListener('change', onModelChange);
-$('customModel').addEventListener('change', onModelChange);
 $('newChat').addEventListener('click', () => {
   if (controller) controller.abort();
   history = [];

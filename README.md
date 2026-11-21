@@ -5,8 +5,8 @@ Petit site pour tester les réponses de modèles d'IA via OpenRouter.
 - On choisit un modèle, on pose une question, la réponse s'affiche en direct.
 - La conversation garde le contexte tant que la page reste ouverte.
 - Aucune mémoire : rafraîchir la page efface tout (rien n'est enregistré côté serveur).
-- Liste des modèles : récupérée en direct sur OpenRouter et filtrée sur les familles réputées peu bridées (Venice/Dolphin, Hermes, Grok, Mistral, TheDrummer, Sao10K, Magnum, NeverSleep, MythoMax). Modifiable dans `api/models.js`.
-- « Autre modèle » permet de saisir n'importe quel ID OpenRouter.
+- Sélecteur de modèles : tous les modèles texte utilisables avec la clé (OpenRouter applique les réglages de confidentialité du compte), avec recherche, prix par million de tokens, section « Réputés peu bridés » (familles définies dans `api/models.js`).
+- Favoris (★) et archives enregistrés dans le navigateur (localStorage) ; un champ permet de saisir n'importe quel ID OpenRouter.
 
 ## Variables Vercel
 
