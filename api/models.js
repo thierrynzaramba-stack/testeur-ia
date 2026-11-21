@@ -18,6 +18,7 @@ export function groupModels(list) {
   const groups = FAMILIES.map((f) => ({ family: f.label, models: [] }));
   for (const m of list) {
     if (!m || typeof m.id !== 'string') continue;
+    if (m.id.endsWith(':batch')) continue; // variantes différées, inutilisables en chat
     const out = m.architecture?.output_modalities;
     if (Array.isArray(out) && !out.includes('text')) continue; // ignore image/audio
     const i = FAMILIES.findIndex((f) => f.test(m.id));
